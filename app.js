@@ -75,12 +75,48 @@ map.on('click',e=>{
 });
 
 // Route
-document.getElementById('btn-route').onclick=async()=>{
-  if(routingControl){map.removeControl(routingControl);routingControl=null;return}
-  const from=prompt("Start location","Manila"),to=prompt("Destination","Cebu");
-  if(!from||!to)return;
-  const f=await geocode(from),t=await geocode(to);
-  routingControl=L.Routing.control({waypoints:[L.latLng(f.lat,f.lon),L.latLng(t.lat,t.lon)]}).addTo(map);
+// Route
+document.getElementById('btn-route').onclick = async () => {
+  if (routingControl) {
+    map.removeControl(routingControl);
+    routingControl = null;
+    return;
+  }
+
+  const from = prompt("Start location", "Manila"),
+        to   = prompt("Destination", "Cebu");
+  if (!from || !to) return;
+
+  // Show spinner
+  document.getElementById("loading").classList.add("active");
+
+  try {
+    const f = await geocode(from), t = await geocode(to);
+    if (!f || !t) throw new Error("Could not geocode one of the locations");
+
+    routingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(f.lat, f.lon),
+        L.latLng(t.lat, t.lon)
+      ],
+      routeWhileDragging: false
+    }).addTo(map);
+
+    // Hide spinner when route is ready
+    routingControl.on("routesfound", () => {
+      document.getElementById("loading").classList.remove("active");
+    });
+
+    // Also hide if an error happens
+    routingControl.on("routingerror", () => {
+      alert("Routing failed. Try again.");
+      document.getElementById("loading").classList.remove("active");
+    });
+
+  } catch (err) {
+    alert(err.message || "Error creating route");
+    document.getElementById("loading").classList.remove("active");
+  }
 };
 
 // Share view
