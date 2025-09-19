@@ -3,63 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Interactive Map App — Demo</title>
+  <title>Interactive Map App</title>
 
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <!-- MarkerCluster CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <!-- Routing Machine CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="app">
-    <aside id="sidebar">
-      <header>
-        <h1>Interactive Map App</h1>
-        <div class="muted">Professional, responsive map app built with Leaflet.js — no backend required.</div>
-      </header>
+  <div class="container">
+    <div id="app">
+      <aside id="sidebar">
+        <header>
+          <h1>Map Dashboard</h1>
+          <p class="muted">Explore, measure, and route with ease.</p>
+        </header>
 
-      <div class="controls">
-        <button id="btn-location" class="btn">Current Location</button>
-        <button id="btn-add-marker" class="btn">Add Marker</button>
-        <button id="btn-measure" class="btn">Measure</button>
-        <button id="btn-route" class="btn">Route</button>
-        <button id="btn-share" class="btn">Share View</button>
-      </div>
-
-      <div class="search">
-        <input id="search-input" placeholder="Search city or address (e.g. Tokyo)" />
-        <button id="search-btn" class="btn primary">Search</button>
-      </div>
-
-      <div class="row" style="margin-top:8px;justify-content:space-between">
-        <div class="small">Map Style</div>
-        <select id="style-select" class="btn" style="flex:1;padding:8px;border-radius:8px;background:#0f172a;color:var(--white);border:1px solid rgba(255,255,255,0.1)">
-          <option value="osm">Street</option>
-          <option value="sat">Satellite</option>
-          <option value="dark">Dark</option>
-        </select>
-      </div>
-
-      <div class="locations" id="locations-list" aria-live="polite"></div>
-
-      <!-- Loading Spinner -->
-        <div id="loading" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Loading route...</p>
+        <div class="controls">
+          <button id="btn-location" class="btn">📍 Location</button>
+          <button id="btn-add-marker" class="btn">➕ Marker</button>
+          <button id="btn-measure" class="btn">📏 Measure</button>
+          <button id="btn-route" class="btn">🛣️ Route</button>
+          <button id="btn-share" class="btn">🔗 Share</button>
         </div>
-        
-      <footer>
-        <div class="small">Built with Leaflet · MarkerCluster · External APIs (Nominatim, OSRM)</div>
-      </footer>
-    </aside>
 
-    <main>
-      <div id="map"></div>
-    </main>
+        <div class="search">
+          <input id="search-input" placeholder="Search a city or address" />
+          <button id="search-btn" class="btn primary">🔍</button>
+        </div>
+
+        <div class="select-wrap">
+          <label for="style-select" class="small">Map Style</label>
+          <select id="style-select" class="select">
+            <option value="osm">Street</option>
+            <option value="sat">Satellite</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+
+        <div class="locations" id="locations-list" aria-live="polite"></div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading-overlay">
+          <div class="spinner"></div>
+          <p>Loading route...</p>
+        </div>
+
+        <footer>
+          <div class="small">Powered by Leaflet · OpenStreetMap · OSRM</div>
+        </footer>
+      </aside>
+
+      <main>
+        <div id="map"></div>
+      </main>
+
+    </div>
   </div>
 
   <!-- Leaflet & Plugins -->
