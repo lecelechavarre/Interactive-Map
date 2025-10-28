@@ -20,20 +20,22 @@ class MapApp {
   
   initMap() {
     // Initialize map
-    this.map = L.map('map').setView([14.5995, 120.9842], 5);
+    this.map = L.map('map', {
+      attributionControl: false // Disable attribution control
+    }).setView([14.5995, 120.9842], 5);
     
     // Define tile layers
     this.tileLayers = {
       osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-        attribution: '© OpenStreetMap',
+        attribution: '', // Empty attribution
         maxZoom: 19
       }),
       sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri',
+        attribution: '', // Empty attribution
         maxZoom: 19
       }),
       dark: L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-        attribution: '© Stadia Maps',
+        attribution: '', // Empty attribution
         maxZoom: 20
       })
     };
@@ -42,7 +44,7 @@ class MapApp {
     this.tileLayers.osm.addTo(this.map);
     this.currentTileLayer = 'osm';
     
-    // Add controls
+    // Add controls (without attribution)
     L.control.zoom({ position: 'topright' }).addTo(this.map);
     L.control.scale({ imperial: false }).addTo(this.map);
     
