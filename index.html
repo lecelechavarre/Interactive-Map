@@ -1,20 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Interactive Map App</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Interactive Map App</title>
+  
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <!-- MarkerCluster CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <!-- Routing Machine CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
-
+  
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
@@ -30,7 +28,8 @@
           <button id="btn-add-marker" class="btn">➕ Marker</button>
           <button id="btn-measure" class="btn">📏 Measure</button>
           <button id="btn-route" class="btn">🛣️ Route</button>
-          <button id="btn-share" class="btn">🔗 Share</button>
+          <button id="btn-clear" class="btn">🗑️ Clear</button>
+          <button id="btn-export" class="btn">📤 Export</button>
         </div>
 
         <div class="search">
@@ -47,23 +46,64 @@
           </select>
         </div>
 
-        <div class="locations" id="locations-list" aria-live="polite"></div>
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-label">Markers</span>
+            <span id="marker-count" class="stat-value">0</span>
+          </div>
+        </div>
 
-        <!-- Loading Spinner -->
+        <div class="locations" id="locations-list"></div>
+
         <div id="loading" class="loading-overlay">
           <div class="spinner"></div>
           <p>Loading route...</p>
         </div>
 
+        <div id="toast" class="toast"></div>
+
         <footer>
-          <div class="small">Powered by Leaflet · OpenStreetMap · OSRM</div>
+          <div class="small">Powered by Leaflet · OpenStreetMap</div>
         </footer>
       </aside>
 
       <main>
         <div id="map"></div>
+        <div class="map-controls">
+          <button id="btn-fullscreen" class="map-btn">⛶</button>
+        </div>
       </main>
+    </div>
+  </div>
 
+  <!-- Modal for marker details -->
+  <div id="marker-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add Marker</h2>
+      <form id="marker-form">
+        <div class="form-group">
+          <label for="marker-title">Title</label>
+          <input type="text" id="marker-title" required>
+        </div>
+        <div class="form-group">
+          <label for="marker-desc">Description</label>
+          <textarea id="marker-desc" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="marker-icon">Icon</label>
+          <select id="marker-icon">
+            <option value="📍">📍 Pin</option>
+            <option value="🏠">🏠 Home</option>
+            <option value="🏢">🏢 Office</option>
+            <option value="⭐">⭐ Favorite</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancel-marker" class="btn">Cancel</button>
+          <button type="submit" class="btn primary">Save Marker</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -71,9 +111,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
-  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
   <!-- Custom JS -->
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
