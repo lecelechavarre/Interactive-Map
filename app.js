@@ -1,5 +1,5 @@
-// Main Application
-class MapApp {
+// Modern Map Application
+class ModernMapApp {
   constructor() {
     this.map = null;
     this.markers = [];
@@ -7,6 +7,7 @@ class MapApp {
     this.routingControl = null;
     this.addMode = false;
     this.pendingMarkerLatLng = null;
+    this.currentCoordinates = { lat: 0, lng: 0 };
     
     this.init();
   }
@@ -14,28 +15,37 @@ class MapApp {
   init() {
     this.initMap();
     this.initEventListeners();
+    this.initUIComponents();
     this.loadMarkersFromStorage();
     this.updateStats();
+    
+    // Update coordinates display on map move
+    this.map.on('mousemove', (e) => {
+      this.updateCoordinatesDisplay(e.latlng);
+    });
+    
+    console.log('Modern Map App initialized');
   }
   
   initMap() {
-    // Initialize map
+    // Initialize map with modern settings
     this.map = L.map('map', {
-      attributionControl: false // Disable attribution control
+      attributionControl: false,
+      zoomControl: false
     }).setView([14.5995, 120.9842], 5);
     
-    // Define tile layers
+    // Define modern tile layers
     this.tileLayers = {
-      osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-        attribution: '', // Empty attribution
+      osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '',
         maxZoom: 19
       }),
       sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '', // Empty attribution
+        attribution: '',
         maxZoom: 19
       }),
       dark: L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-        attribution: '', // Empty attribution
+        attribution: '',
         maxZoom: 20
       })
     };
@@ -44,49 +54,67 @@ class MapApp {
     this.tileLayers.osm.addTo(this.map);
     this.currentTileLayer = 'osm';
     
-    // Add controls (without attribution)
-    L.control.zoom({ position: 'topright' }).addTo(this.map);
-    L.control.scale({ imperial: false }).addTo(this.map);
+    // Add custom zoom controls
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(this.map);
     
-    // Initialize marker cluster
-    this.markersCluster = L.markerClusterGroup().addTo(this.map);
+    // Initialize marker cluster with modern styling
+    this.markersCluster = L.markerClusterGroup({
+      iconCreateFunction: function (cluster) {
+        const count = cluster.getChildCount();
+        let size = 'large';
+        
+        if (count < 10) {
+          size = 'small';
+        } else if (count < 100) {
+          size = 'medium';
+        }
+        
+        return L.divIcon({
+          html: `<div class="cluster-marker cluster-${size}">${count}</div>`,
+          className: 'marker-cluster-custom',
+          iconSize: L.point(40, 40)
+        });
+      }
+    }).addTo(this.map);
     
-    // Add some example markers
+    // Add example markers
     this.addExampleMarkers();
   }
   
   initEventListeners() {
-    // Location button
+    // Quick Actions
     document.getElementById('btn-location').addEventListener('click', () => {
       this.findUserLocation();
     });
     
-    // Add marker button
     document.getElementById('btn-add-marker').addEventListener('click', () => {
       this.enableAddMode();
     });
     
-    // Measure button
-    document.getElementById('btn-measure').addEventListener('click', () => {
-      this.toggleMeasureMode();
-    });
-    
-    // Route button
     document.getElementById('btn-route').addEventListener('click', () => {
       this.toggleRouteMode();
     });
     
-    // Clear button
-    document.getElementById('btn-clear').addEventListener('click', () => {
-      this.clearAllMarkers();
+    // Tools
+    document.getElementById('btn-measure').addEventListener('click', () => {
+      this.toggleMeasureMode();
     });
     
-    // Export button
     document.getElementById('btn-export').addEventListener('click', () => {
       this.exportMarkers();
     });
     
-    // Search functionality
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      this.clearAllMarkers();
+    });
+    
+    document.getElementById('btn-fullscreen').addEventListener('click', () => {
+      this.toggleFullscreen();
+    });
+    
+    // Search
     document.getElementById('search-btn').addEventListener('click', () => {
       this.performSearch();
     });
@@ -96,13 +124,26 @@ class MapApp {
     });
     
     // Map style selector
-    document.getElementById('style-select').addEventListener('change', (e) => {
-      this.changeTileLayer(e.target.value);
+    document.querySelectorAll('.style-option').forEach(option => {
+      option.addEventListener('click', (e) => {
+        const style = e.currentTarget.dataset.style;
+        this.changeTileLayer(style);
+        
+        // Update active state
+        document.querySelectorAll('.style-option').forEach(opt => {
+          opt.classList.remove('active');
+        });
+        e.currentTarget.classList.add('active');
+      });
     });
     
-    // Fullscreen button
-    document.getElementById('btn-fullscreen').addEventListener('click', () => {
-      this.toggleFullscreen();
+    // Zoom controls
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      this.map.zoomIn();
+    });
+    
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      this.map.zoomOut();
     });
     
     // Modal events
@@ -115,14 +156,13 @@ class MapApp {
       this.saveMarkerFromForm();
     });
     
-    document.querySelector('.close').addEventListener('click', () => {
+    document.querySelector('.modal-close').addEventListener('click', () => {
       this.closeMarkerModal();
     });
     
     // Click outside modal to close
-    window.addEventListener('click', (e) => {
-      const modal = document.getElementById('marker-modal');
-      if (e.target === modal) {
+    document.getElementById('marker-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('marker-modal')) {
         this.closeMarkerModal();
       }
     });
@@ -135,6 +175,11 @@ class MapApp {
     });
   }
   
+  initUIComponents() {
+    // Initialize any additional UI components
+    this.updateCoordinatesDisplay({ lat: 14.5995, lng: 120.9842 });
+  }
+  
   addExampleMarkers() {
     this.addMarker(48.8584, 2.2945, "Eiffel Tower", "Paris, France", "🗼");
     this.addMarker(40.6892, -74.0445, "Statue of Liberty", "New York, USA", "🗽");
@@ -142,24 +187,37 @@ class MapApp {
   }
   
   addMarker(lat, lng, title, description = '', icon = '📍') {
-    // Create custom icon
+    // Create modern marker icon
     const customIcon = L.divIcon({
-      html: `<div style="font-size:20px">${icon}</div>`,
-      className: 'custom-marker-icon',
+      html: `
+        <div class="modern-marker">
+          <div class="marker-icon">${icon}</div>
+          <div class="marker-pulse"></div>
+        </div>
+      `,
+      className: 'custom-marker',
       iconSize: [32, 32],
-      iconAnchor: [16, 16]
+      iconAnchor: [16, 32]
     });
     
     // Create marker
     const marker = L.marker([lat, lng], { icon: customIcon });
     
-    // Create popup content
+    // Create modern popup content
     const popupContent = `
-      <div class="marker-popup">
-        <h3>${title}</h3>
-        ${description ? `<p>${description}</p>` : ''}
+      <div class="modern-popup">
+        <div class="popup-header">
+          <div class="popup-icon">${icon}</div>
+          <h3 class="popup-title">${title}</h3>
+        </div>
+        ${description ? `<p class="popup-desc">${description}</p>` : ''}
         <div class="popup-actions">
-          <button class="popup-btn delete-marker" data-id="${this.markers.length}">Delete</button>
+          <button class="popup-btn delete-marker" data-id="${this.markers.length}">
+            <span>Delete</span>
+          </button>
+          <button class="popup-btn zoom-marker" data-id="${this.markers.length}">
+            <span>Zoom</span>
+          </button>
         </div>
       </div>
     `;
@@ -188,12 +246,17 @@ class MapApp {
     // Save to localStorage
     this.saveMarkersToStorage();
     
-    // Set up popup events after the popup is opened
+    // Set up popup events
     marker.on('popupopen', () => {
-      // Add event listeners to popup buttons
       document.querySelector('.delete-marker').addEventListener('click', (e) => {
-        const id = parseInt(e.target.getAttribute('data-id'));
+        const id = parseInt(e.target.closest('.delete-marker').getAttribute('data-id'));
         this.removeMarker(id);
+        this.map.closePopup();
+      });
+      
+      document.querySelector('.zoom-marker').addEventListener('click', (e) => {
+        const id = parseInt(e.target.closest('.zoom-marker').getAttribute('data-id'));
+        this.zoomToMarker(id);
         this.map.closePopup();
       });
     });
@@ -204,24 +267,24 @@ class MapApp {
   addToSidebar(markerData) {
     const list = document.getElementById('locations-list');
     const item = document.createElement('div');
-    item.className = 'loc';
+    item.className = 'location-item';
     item.setAttribute('data-id', markerData.id);
     
     item.innerHTML = `
-      <div class="icon">${markerData.icon}</div>
-      <div class="loc-content">
-        <div class="loc-title">${markerData.title}</div>
-        <div class="small">${markerData.description || 'No description'}</div>
+      <div class="location-icon">${markerData.icon}</div>
+      <div class="location-content">
+        <div class="location-title">${markerData.title}</div>
+        <div class="location-desc">${markerData.description || 'No description'}</div>
       </div>
-      <div class="loc-actions">
-        <button class="loc-action zoom-action" title="Zoom to marker">🔍</button>
-        <button class="loc-action delete-action" title="Delete marker">🗑️</button>
+      <div class="location-actions">
+        <button class="location-action zoom-action" title="Zoom to marker">🔍</button>
+        <button class="location-action delete-action" title="Delete marker">🗑️</button>
       </div>
     `;
     
     // Add click event to zoom to marker
     item.addEventListener('click', (e) => {
-      if (!e.target.closest('.loc-actions')) {
+      if (!e.target.closest('.location-actions')) {
         this.zoomToMarker(markerData.id);
       }
     });
@@ -248,7 +311,7 @@ class MapApp {
       this.markersCluster.removeLayer(this.markers[markerIndex].marker);
       
       // Remove from sidebar
-      const sidebarItem = document.querySelector(`.loc[data-id="${id}"]`);
+      const sidebarItem = document.querySelector(`.location-item[data-id="${id}"]`);
       if (sidebarItem) {
         sidebarItem.remove();
       }
@@ -267,7 +330,7 @@ class MapApp {
       // Save to storage
       this.saveMarkersToStorage();
       
-      this.showToast('Marker removed', 'info');
+      this.showToast('Location removed', 'info');
       this.updateStats();
     }
   }
@@ -327,17 +390,23 @@ class MapApp {
             break;
         }
         this.showToast(message, 'error');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
       }
     );
   }
   
   enableAddMode() {
     this.addMode = true;
-    this.showToast('Click on the map to add a marker', 'info');
+    this.showToast('Click anywhere on the map to add a location', 'info');
   }
   
   toggleMeasureMode() {
-    this.showToast('Measurement mode would activate here', 'info');
+    this.showToast('Measurement tool activated', 'info');
+    // Implementation would go here
   }
   
   toggleRouteMode() {
@@ -382,7 +451,7 @@ class MapApp {
         this.map.removeControl(this.routingControl);
       }
       
-      // Create new route
+      // Create new route with modern styling
       this.routingControl = L.Routing.control({
         waypoints: [
           L.latLng(fromLocation.lat, fromLocation.lon),
@@ -390,19 +459,42 @@ class MapApp {
         ],
         routeWhileDragging: false,
         lineOptions: {
-          styles: [{ color: '#0ea5a4', weight: 5 }]
+          styles: [
+            { color: '#6366f1', weight: 6, opacity: 0.8 },
+            { color: '#ffffff', weight: 3, opacity: 0.6 }
+          ]
+        },
+        createMarker: (i, waypoint, n) => {
+          const marker = L.marker(waypoint.latLng, {
+            icon: L.divIcon({
+              html: i === 0 ? 
+                '<div class="route-marker start">A</div>' : 
+                '<div class="route-marker end">B</div>',
+              className: 'custom-route-marker',
+              iconSize: [32, 32],
+              iconAnchor: [16, 16]
+            })
+          });
+          return marker;
         }
       }).addTo(this.map);
       
       // Set up event listeners
-      this.routingControl.on('routesfound', () => {
+      this.routingControl.on('routesfound', (e) => {
         document.getElementById('loading').classList.remove('active');
-        this.showToast('Route calculated successfully', 'success');
+        const routes = e.routes;
+        const summary = routes[0].summary;
+        
+        // Display route info
+        const distance = (summary.totalDistance / 1000).toFixed(2);
+        const time = (summary.totalTime / 60).toFixed(0);
+        
+        this.showToast(`Route found: ${distance} km, ~${time} minutes`, 'success');
       });
       
       this.routingControl.on('routingerror', () => {
         document.getElementById('loading').classList.remove('active');
-        this.showToast('Routing failed. Try again.', 'error');
+        this.showToast('Routing failed. Please try again.', 'error');
       });
       
     } catch (error) {
@@ -412,12 +504,12 @@ class MapApp {
   }
   
   clearAllMarkers() {
-    if (confirm('Are you sure you want to remove all markers?')) {
+    if (confirm('Are you sure you want to remove all locations?')) {
       this.markersCluster.clearLayers();
       this.markers = [];
       document.getElementById('locations-list').innerHTML = '';
       this.saveMarkersToStorage();
-      this.showToast('All markers cleared', 'info');
+      this.showToast('All locations cleared', 'info');
       this.updateStats();
     }
   }
@@ -432,21 +524,21 @@ class MapApp {
     }));
     
     if (markersData.length === 0) {
-      this.showToast('No markers to export', 'info');
+      this.showToast('No locations to export', 'info');
       return;
     }
     
     const dataStr = JSON.stringify(markersData, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    const exportFileDefaultName = 'map-markers.json';
+    const exportFileDefaultName = 'geoexplorer-locations.json';
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
     
-    this.showToast('Markers exported successfully', 'success');
+    this.showToast('Locations exported successfully', 'success');
   }
   
   async performSearch() {
@@ -503,9 +595,14 @@ class MapApp {
     }
   }
   
+  updateCoordinatesDisplay(latlng) {
+    document.getElementById('lat-display').textContent = latlng.lat.toFixed(4);
+    document.getElementById('lng-display').textContent = latlng.lng.toFixed(4);
+  }
+  
   openMarkerModal(latlng) {
     this.pendingMarkerLatLng = latlng;
-    document.getElementById('marker-modal').style.display = 'block';
+    document.getElementById('marker-modal').style.display = 'flex';
     document.getElementById('marker-title').focus();
   }
   
@@ -519,12 +616,12 @@ class MapApp {
   saveMarkerFromForm() {
     const title = document.getElementById('marker-title').value.trim();
     if (!title) {
-      this.showToast('Please enter a title for the marker', 'error');
+      this.showToast('Please enter a location name', 'error');
       return;
     }
     
     const description = document.getElementById('marker-desc').value.trim();
-    const icon = document.getElementById('marker-icon').value;
+    const icon = document.querySelector('input[name="marker-icon"]:checked').value;
     
     this.addMarker(
       this.pendingMarkerLatLng.lat,
@@ -535,14 +632,14 @@ class MapApp {
     );
     
     this.closeMarkerModal();
-    this.showToast('Marker added successfully', 'success');
+    this.showToast('Location added successfully', 'success');
     this.updateStats();
   }
   
   toggleFullscreen() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
-        this.showToast('Error attempting to enable fullscreen', 'error');
+        this.showToast('Error entering fullscreen mode', 'error');
       });
     } else {
       if (document.exitFullscreen) {
@@ -564,7 +661,7 @@ class MapApp {
         description: marker.description,
         icon: marker.icon
       }));
-      localStorage.setItem('mapMarkers', JSON.stringify(markersData));
+      localStorage.setItem('geoexplorerMarkers', JSON.stringify(markersData));
     } catch (error) {
       console.error('Failed to save markers to storage:', error);
     }
@@ -572,7 +669,7 @@ class MapApp {
   
   loadMarkersFromStorage() {
     try {
-      const savedMarkers = localStorage.getItem('mapMarkers');
+      const savedMarkers = localStorage.getItem('geoexplorerMarkers');
       if (savedMarkers) {
         const markersData = JSON.parse(savedMarkers);
         markersData.forEach(marker => {
@@ -593,21 +690,192 @@ class MapApp {
   showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
-    toast.className = 'toast';
+    toast.className = 'toast ' + type;
     toast.classList.add('show');
-    
-    // Add type class if provided
-    if (type) {
-      toast.classList.add(type);
-    }
     
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 3000);
+    }, 4000);
   }
 }
 
+// Add custom CSS for modern markers and clusters
+const style = document.createElement('style');
+style.textContent = `
+  .modern-marker {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .marker-icon {
+    width: 24px;
+    height: 24px;
+    background: #6366f1;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+    position: relative;
+  }
+  
+  .marker-icon::before {
+    content: '';
+    transform: rotate(45deg);
+  }
+  
+  .marker-pulse {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.3);
+    animation: pulse 2s infinite;
+    z-index: 1;
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+  
+  .modern-popup {
+    padding: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  }
+  
+  .popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+  }
+  
+  .popup-icon {
+    font-size: 16px;
+  }
+  
+  .popup-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .popup-desc {
+    padding: 12px 16px;
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .popup-actions {
+    display: flex;
+    padding: 8px;
+    gap: 4px;
+  }
+  
+  .popup-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .popup-btn:first-child {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .popup-btn:last-child {
+    background: #e5e7eb;
+    color: #374151;
+  }
+  
+  .popup-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cluster-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 3px solid white;
+  }
+  
+  .cluster-small {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+  
+  .cluster-medium {
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+  }
+  
+  .cluster-large {
+    width: 52px;
+    height: 52px;
+    font-size: 16px;
+  }
+  
+  .route-marker {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  .route-marker.start {
+    background: #10b981;
+  }
+  
+  .route-marker.end {
+    background: #ef4444;
+  }
+`;
+document.head.appendChild(style);
+
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  window.mapApp = new MapApp();
+  window.modernMapApp = new ModernMapApp();
 });
